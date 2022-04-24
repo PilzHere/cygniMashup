@@ -50,6 +50,7 @@ public class ArtistController {
         final String artistName = getArtistName(artistRootJSON);
         final String artistQID = getArtistWikiDataQID(artistRootJSON);
         List<Album> artistAlbums = getArtistAlbumIDs(artistRootJSON);
+        //artistAlbums = getArtistAlbumCoverLinksOriginal(artistAlbums);
         artistAlbums = getArtistAlbumCoverLinks(artistAlbums);
         final String wikipediaURL = getArtistWikipediaURL(artistQID);
         final String artistDescription = getArtistWikipediaDescription(wikipediaURL);
@@ -156,6 +157,95 @@ public class ArtistController {
      * @throws IOException
      * @throws InterruptedException
      */
+    public List<Album> getArtistAlbumCoverLinksOriginal (List<Album> artistAlbums) throws IOException, InterruptedException {
+
+        for (Album album : artistAlbums) {
+            final String coverArtArchiveURL = "http://coverartarchive.org/release-group/" + album.getId();
+            final URL url = new URL(coverArtArchiveURL);
+
+            // JSON response is redirected: we need a webclient!
+            final WebClient webClient = WebClient.create();
+
+            ResponseEntity<String> response1 = webClient.get()
+                    .uri(url.toString())
+                    .accept(MediaType.TEXT_PLAIN)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+
+            if (response1.getStatusCode() == HttpStatus.NOT_FOUND) {
+                album.setImageLink("Could not be found.");
+
+                continue;
+            }
+
+            HttpHeaders headers = response1.getHeaders();
+            final String redirectLocation1 = headers.getFirst("Location");
+
+            //System.out.println(redirectLocation1);
+
+            if (redirectLocation1 == null) { // Sometimes there is none.
+                album.setImageLink("Could not be found.");
+
+                continue;
+            }
+
+            URL url1 = new URL(redirectLocation1);
+            ResponseEntity<String> response2 = webClient.get()
+                    .uri(url1.toString())
+                    .accept(MediaType.APPLICATION_JSON)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block(); // <-- FIXME: ERRORS här!
+
+            HttpHeaders headers2 = response2.getHeaders();
+            final String redirectLocation2 = headers2.getFirst("Location");
+
+            //System.out.println(redirectLocation2);
+
+            if (redirectLocation2 == null) { // Sometimes there is none.
+                album.setImageLink("Could not be found.");
+
+                continue;
+            }
+
+            URL jsonURL;
+            try {
+                jsonURL = new URL(redirectLocation2);
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            final JsonNode jsonRootNode;
+            try {
+                jsonRootNode = objectMapper.readTree(jsonURL);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            final JsonNode jsonImagesArrayNode = jsonRootNode.path("images");
+
+            if (jsonImagesArrayNode.isArray()) {
+                for (final JsonNode jsonNode : jsonImagesArrayNode) {
+                    final String currentAlbumCoverLink = jsonNode.get("image").asText();
+                    album.setImageLink(currentAlbumCoverLink);
+                }
+            }
+        }
+
+        return artistAlbums;
+    }
+
+    /**
+     * Gets links to artist's album covers.
+     *
+     * @param artistAlbums
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public List<Album> getArtistAlbumCoverLinks (List<Album> artistAlbums) throws IOException, InterruptedException {
         /* CYGNI: Det här är delen som tar tid att få ner. Detta var lite svårare då JSON-svaret fås från redirection
         vilket ObjectMapper inte tycker om!
@@ -163,7 +253,8 @@ public class ArtistController {
         med WebClient men inte hittat något svar som jag förstår...
         Detta funkar, har gjort några fulingar... men koden är snabbare den jag hade innan (~30 sek --> ~5-12 sek) men
         inte perfekt.
-        Googlade framm något om Mono och Flux men det är nytt för mig och jag förstår inte det riktigt tyvär...
+        Googlade framm något om Mono och Flux och att jag INTE ska blocka... men det är nytt för mig och jag förstår
+        inte det riktigt tyvärr...
          */
 
         final int indexesWanted = artistAlbums.size();
