@@ -1,12 +1,19 @@
-package cygni.pilzhere.cygnimashup;
+package cygni.pilzhere.cygnimashup.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * @author pilzhere
  * @created 23/04/2022 - 4:27 PM
  * @project cygniMashup
  */
+
+@Getter
+@Setter
+@NoArgsConstructor
 public class Album {
     @JsonProperty ("id")
     private String id;
@@ -17,28 +24,9 @@ public class Album {
     @JsonProperty ("image")
     private String imageLink;
 
-    public Album () {
-    }
-
     public Album (String id, String title, String imageLink) {
         this.id = id;
         this.title = title;
-        this.imageLink = imageLink;
-    }
-
-    public String getId () {
-        return id;
-    }
-
-    public String getTitle () {
-        return title;
-    }
-
-    public String getImageLink () {
-        return imageLink;
-    }
-
-    public void setImageLink (String imageLink) {
         this.imageLink = imageLink;
     }
 }

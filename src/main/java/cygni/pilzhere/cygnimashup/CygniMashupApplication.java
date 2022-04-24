@@ -9,5 +9,4 @@ public class CygniMashupApplication {
     public static void main (String[] args) {
         SpringApplication.run(CygniMashupApplication.class, args);
     }
-
 }

@@ -1,8 +1,10 @@
-package cygni.pilzhere.cygnimashup;
+package cygni.pilzhere.cygnimashup.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -10,6 +12,10 @@ import java.util.List;
  * @created 17/04/2022 - 9:10 PM
  * @project cygniMashup
  */
+
+@Getter
+@Setter
+@NoArgsConstructor
 public class Artist {
     @JsonProperty ("mbid")
     private String mbid;
@@ -27,11 +33,7 @@ public class Artist {
     private String description;
 
     @JsonProperty ("albums")
-    private List<Album> albums; // name, url
-
-    public Artist () {
-
-    }
+    private List<Album> albums;
 
     public Artist (String mbid, String qid, String name, String wikipediaURL, String description, List<Album> albums) {
         this.mbid = mbid;
@@ -40,29 +42,5 @@ public class Artist {
         this.wikipediaURL = wikipediaURL;
         this.description = description;
         this.albums = albums;
-    }
-
-    public String getMbid () {
-        return mbid;
-    }
-
-    public String getQid () {
-        return qid;
-    }
-
-    public String getName () {
-        return name;
-    }
-
-    public String getWikipediaURL () {
-        return wikipediaURL;
-    }
-
-    public String getDescription () {
-        return description;
-    }
-
-    public List<Album> getAlbums () {
-        return albums;
     }
 }
