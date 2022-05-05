@@ -1,30 +1,19 @@
 package cygni.pilzhere.cygnimashup.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import cygni.pilzhere.cygnimashup.model.Album;
 import cygni.pilzhere.cygnimashup.model.Artist;
 import cygni.pilzhere.cygnimashup.services.CoverArtArchiveService;
 import cygni.pilzhere.cygnimashup.services.MuzicBrainzService;
 import cygni.pilzhere.cygnimashup.services.WikiDataService;
 import cygni.pilzhere.cygnimashup.services.WikipediaService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.reactive.function.client.WebClient;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author pilzhere

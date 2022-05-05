@@ -2,6 +2,8 @@ package cygni.pilzhere.cygnimashup.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import cygni.pilzhere.cygnimashup.exception.WikipediaJsonNotFoundException;
+import cygni.pilzhere.cygnimashup.exception.WikipediaURLNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -32,8 +34,9 @@ public class WikipediaService {
         try {
             JsonRootNode = objectMapper.readTree(new URL(wikidataURL));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new WikipediaURLNotFoundException(wikidataURL);
         }
+
         final JsonNode jsonSiteLinks = JsonRootNode.path("entities").path(qid).path("sitelinks").path("enwiki");
 
         return jsonSiteLinks.get("url").asText();
@@ -62,8 +65,9 @@ public class WikipediaService {
         try {
             jsonRootNode = objectMapper.readTree(new URL(url));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new WikipediaJsonNotFoundException(url);
         }
+
         final JsonNode jsonSiteLinks = jsonRootNode.path("query").path("pages").elements().next(); // Node inside "pages" has random(?) name.
 
         return jsonSiteLinks.get("extract").asText();

@@ -2,6 +2,7 @@ package cygni.pilzhere.cygnimashup.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import cygni.pilzhere.cygnimashup.exception.CoverArtArchiveJsonNotFoundException;
 import cygni.pilzhere.cygnimashup.model.Album;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -13,7 +14,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,23 +60,15 @@ public class CoverArtArchiveService {
             // JSON response is redirected: we need a webclient!
             final WebClient webClient = WebClient.create();
 
-            long timeOut = 2L;
             webClient.get()
                     .uri(url.toString())
                     .accept(MediaType.TEXT_PLAIN)
                     .exchange() // deprecated: can cause memory leaks!
-                    .timeout(Duration.ofSeconds(timeOut))
-                    .doOnError(exception -> {
-                        nok.incrementAndGet();
-                    })
+                    .doOnError(exception -> nok.incrementAndGet())
                     .doOnSuccess(clientResponse -> {
                         HttpHeaders headers = clientResponse.headers().asHttpHeaders();
                         String redirectLocation = headers.getFirst("Location");
-
-                        //System.out.println("1: " + redirectLocation);
-
                         albumRedirects.put(album.getId(), redirectLocation);
-
                         ok.incrementAndGet();
                     })
                     .subscribe();
@@ -110,7 +102,6 @@ public class CoverArtArchiveService {
         for (Album album : artistAlbums) {
             final String redirectLink = albumRedirects.get(album.getId());
             final WebClient webClient = WebClient.create();
-            final long timeOut = 5L;
 
             if (redirectLink != null) {
                 if (!redirectLink.isBlank()) {
@@ -125,7 +116,6 @@ public class CoverArtArchiveService {
                             .uri(url.toString())
                             .accept(MediaType.APPLICATION_JSON)
                             .exchange() // deprecated: can cause memory leaks!
-                            .timeout(Duration.ofSeconds(timeOut))
                             .doOnError(exception -> {
                                 album.setImageLink("Could not be found.");
                                 nok.incrementAndGet();
@@ -153,7 +143,7 @@ public class CoverArtArchiveService {
                                         jsonRootNode = objectMapper.readTree(jsonURL);
                                     } catch (IOException e) {
                                         nok.getAndIncrement();
-                                        throw new RuntimeException(e);
+                                        throw new CoverArtArchiveJsonNotFoundException(jsonURL.toString());
                                     }
 
                                     final JsonNode jsonImagesArrayNode = jsonRootNode.path("images");
@@ -162,12 +152,9 @@ public class CoverArtArchiveService {
                                         for (final JsonNode jsonNode : jsonImagesArrayNode) {
                                             final String currentAlbumCoverLink = jsonNode.get("image").asText();
 
-                                            //System.out.println("Album: " + album.getTitle());
-                                            //System.out.println(redirectLocation);
-                                            //System.out.println("2: " + currentAlbumCoverLink);
-
                                             album.setImageLink(currentAlbumCoverLink);
                                             ok.incrementAndGet();
+
                                             break; // Get first found in array.
                                         }
                                     }
@@ -229,8 +216,6 @@ public class CoverArtArchiveService {
             HttpHeaders headers = response1.getHeaders();
             final String redirectLocation1 = headers.getFirst("Location");
 
-            //System.out.println(redirectLocation1);
-
             if (redirectLocation1 == null) { // Sometimes there is none.
                 album.setImageLink("Could not be found.");
 
@@ -252,8 +237,6 @@ public class CoverArtArchiveService {
 
             HttpHeaders headers2 = response2.getHeaders();
             final String redirectLocation2 = headers2.getFirst("Location");
-
-            //System.out.println(redirectLocation2);
 
             if (redirectLocation2 == null) { // Sometimes there is none.
                 album.setImageLink("Could not be found.");
